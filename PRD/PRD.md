@@ -34,6 +34,71 @@
     - **Description**: [기능 설명]
     - **Command**: `/command_name` (옵션, 하위 커맨드 포함)
 
+### 3.4. Development Guide (Robo.js)
+**⚠️ 중요**: 이 프로젝트는 `Robo.js` 프레임워크를 기반으로 합니다. 기존 `discord.js`와 구조가 다르므로 아래 가이드를 준수하세요.
+
+#### **A. Project Structure & Config**
+*   **`config/robo.mjs` (필수)**: 봇의 설정 파일입니다. **이 파일이 없으면 봇이 실행되지 않습니다.**
+    *   `intents`: 봇이 수신할 이벤트 권한을 설정합니다 (예: `GuildMessages`, `MessageContent`).
+    *   **권한 부족 시** 이벤트가 발생하지 않거나 에러가 발생할 수 있습니다.
+*   **`src/commands`**: 파일 자체가 슬래시 커맨드가 됩니다. (e.g., `ping.ts` -> `/ping`)
+*   **`src/events`**: 파일 이름이 이벤트 이름과 매핑됩니다. (e.g., `messageCreate.ts`)
+
+#### **B. How to Write Commands**
+슬래시 커맨드는 `Interaction` 객체를 인자로 받고, 문자열이나 객체를 리턴하여 응답합니다. `EmbedBuilder`를 사용하여 풍부한 응답을 보낼 수 있습니다.
+
+```typescript
+import type { CommandConfig, CommandResult } from 'robo.js';
+import { type Interaction, EmbedBuilder } from 'discord.js';
+
+// 커맨드 설정 (설명, 옵션 등)
+export const config: CommandConfig = {
+  description: '서버 상태를 확인합니다.',
+};
+
+export default (interaction: Interaction): CommandResult => {
+  // 기본 텍스트 응답
+  // return "Pong!";
+
+  // 임베드(Embed) 응답 예시
+  const embed = new EmbedBuilder()
+    .setTitle('🏓 Pong!')
+    .setDescription(`Latency: ${interaction.client.ws.ping}ms`)
+    .setColor('Blue') // or Hex Code: #0099ff
+    .setTimestamp();
+
+  return { embeds: [embed] };
+};
+```
+
+#### **C. How to Write Events**
+이벤트 핸들러는 해당 이벤트가 발생할 때 실행됩니다.
+
+```typescript
+import type { Client, Message } from 'discord.js';
+
+// 파일명: src/events/messageCreate.ts
+export default (message: Message, client: Client) => {
+  if (message.author.bot) return; // 봇 메시지 무시
+  console.log(`Received message: ${message.content}`);
+};
+```
+
+#### **D. Essential APIs (Cheat Sheet)**
+봇 개발 시 자주 사용되는 주요 클래스와 메서드입니다.
+
+| Category | Class / Method | Description |
+| :--- | :--- | :--- |
+| **Messaging** | `EmbedBuilder` | 임베드 메시지(제목, 설명, 이미지 등) 생성 |
+| **Components** | `ActionRowBuilder` | 버튼, 셀렉트 메뉴 등을 담는 컨테이너 |
+| | `ButtonBuilder` | 클릭 가능한 버튼 생성 (Link, Primary, Danger 등) |
+| | `StringSelectMenuBuilder` | 드롭다운 선택 메뉴 생성 |
+| | `ModalBuilder` | 팝업 폼(입력창) 생성 |
+| **Permissions** | `PermissionsBitField` | 채널/역할 권한 확인 및 설정 (e.g., `.Flags.Administrator`) |
+| **Interaction** | `interaction.reply()` | 응답 전송 (Robo.js에서는 return으로 대체 가능) |
+| | `interaction.deferReply()` | 3초 이상 걸리는 작업 시 응답 대기 상태로 전환 |
+| | `interaction.editReply()` | defer 후 실제 응답 전송 |
+
 ## 4. Deployment Strategy
 **이 봇은 다음 환경에서 배포될 수 있습니다.** 프로젝트 규모와 예산에 맞춰 선택하세요.
 
